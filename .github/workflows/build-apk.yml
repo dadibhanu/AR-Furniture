@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,9 +37,22 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Prepare release APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Bhamane-Bridal-Store-v1.0.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Bhamane-Bridal-Store-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: Bhamane-Bridal-Store-v1.0.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Bhamane-Bridal-Store-v1.0.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Bhamane Bridal Store v1.0" \
+            --notes "Android APK build for Bhamane Bridal Store. Download the APK file below and install it on your Android device."
